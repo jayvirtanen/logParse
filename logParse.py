@@ -1,22 +1,20 @@
-import textparser
-from textparser import Sequence
+from collections import Counter
+total = []
+checker = []
+with open("console.log") as f:
+	content_list = []
+	for line in f:
+		if "ERROR" in line:
+			line.rstrip()
+			segments = line.split('] - ')
+			line = segments[1]
+			line = line.replace('\n', '') 
+			content_list.append(line)
+count = Counter(content_list)
+for i in count.elements():
+	if i not in checker:
+		checker.append(i)
+		total.append("ERROR " + i +" appears in logs " + str(count[i]) + " times")
+for i in total:
+	print(i)
 
-
-class Parser(textparser.Parser):
-
-    def token_specs(self):
-        return [
-            ('SKIP',          r'[ \r\n\t]+'),
-            ('WORD',          r'\w+'),
-            ('EMARK',    '!', r'!'),
-            ('COMMA',    ',', r','),
-            ('MISMATCH',      r'.')
-        ]
-
-    def grammar(self):
-        return Sequence('WORD', ',', 'WORD', '!')
-
-
-tree = Parser().parse('Hello, World!')
-
-print('Tree:', tree)
