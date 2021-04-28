@@ -1,44 +1,64 @@
+from optparse import OptionParser
 from collections import Counter
 import sys
 
 #String array for printing end result
+
 total = []
-#String array to check against to make sure entries aren't duplicated in 'total'
-checker = []
+
 #String array for parsing the file for raw error messages
-error_list = []
 
-#Accept input file
+errors = []
 
-with open(sys.argv[1], 'r') as f:
+#Add options
+
+usage = "usage: %prog [options] inputfile [outputfile]"
+o = OptionParser(usage=usage)
+o.add_option("-f", "--full", action="store_true", dest="full", help="View error messages untruncated")
+o.add_option("-o", "--output", action="store_true", dest="output", help="Write output to file")
+opts, args = o.parse_args()
+
+with open(args[0], 'r') as f:
+
+#Loop identifies lines in file containing "ERROR," splits the error message from the DTG and system information, and stores the error messages in array errors
 
 	for line in f:
 
 		if "ERROR" in line:
 
 			segments = line.split('] - ')
-
-#Splits the line at the delimiter between the "extra information" and the actual error message
-
 			line = segments[1]
 			line = line.replace('\n', '')
+			errors.append(line)
+f.close()
 
-#Removes superfluous newline character at the end of the line before being added to error list
+#Use Counter to count occurrences and sorted to sort them into a list in descending order
 
-			error_list.append(line)
+count = Counter(errors)
+count = sorted(count.items(), key=lambda pair: pair[1], reverse=True)
 
-#Counter creates a paired list of each error and the number of times it has occurred
+for t in count:
 
-count = Counter(error_list)
-for i in count.elements():
+	uniqueErrors = []
+	if str(t[0]) not in uniqueErrors:
+		if opts.full:
+			total.append("ERROR: " + str(t[0]) + " OCCURRENCES: " + str(t[1]))
+		
+		else:
+			total.append("ERROR: " + str(t[0])[:100] + " OCCURRENCES: " + str(t[1]))
+		uniqueErrors.append(str(t[0]))
 
-#unpairs i (error message) and count[i] (occurrence number) by only passing each unique message to be appended to 'total' once
+#Checks for output option and prints to user defined filename
 
-	if i not in checker:
-
-		checker.append(i)
-		total.append("ERROR: " + i[0:100] +" OCCURENCES: " + str(count[i]))
+if opts.output:
+	if len(args) < 2:
+		args.append(args[0]+".ERR")	
+	with open(args[1], 'w') as p:
+		for i in total:
+			p.write(i + '\n')
+	p.close()
 
 for i in total:
-	print(i)
 
+	print(i)
+		
